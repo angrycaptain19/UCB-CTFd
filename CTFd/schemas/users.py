@@ -67,29 +67,24 @@ class UserSchema(ma.ModelSchema):
                         "User name has already been taken", field_names=["name"]
                     )
             else:
-                if existing_user:
-                    if current_user:
-                        if current_user.id != existing_user.id:
-                            raise ValidationError(
-                                "User name has already been taken", field_names=["name"]
-                            )
-                    else:
-                        raise ValidationError(
-                            "User name has already been taken", field_names=["name"]
-                        )
-        else:
-            if name == current_user.name:
-                return data
-            else:
-                name_changes = get_config("name_changes", default=True)
-                if bool(name_changes) is False:
-                    raise ValidationError(
-                        "Name changes are disabled", field_names=["name"]
-                    )
-                if existing_user:
+                if existing_user and (
+                    current_user.id != existing_user.id or not current_user
+                ):
                     raise ValidationError(
                         "User name has already been taken", field_names=["name"]
                     )
+        else:
+            if name == current_user.name:
+                return data
+            name_changes = get_config("name_changes", default=True)
+            if bool(name_changes) is False:
+                raise ValidationError(
+                    "Name changes are disabled", field_names=["name"]
+                )
+            if existing_user:
+                raise ValidationError(
+                    "User name has already been taken", field_names=["name"]
+                )
 
     @pre_load
     def validate_email(self, data):
@@ -108,49 +103,44 @@ class UserSchema(ma.ModelSchema):
                         "Email address has already been used", field_names=["email"]
                     )
             else:
-                if existing_user:
-                    if current_user:
-                        if current_user.id != existing_user.id:
-                            raise ValidationError(
-                                "Email address has already been used",
-                                field_names=["email"],
-                            )
-                    else:
-                        raise ValidationError(
-                            "Email address has already been used", field_names=["email"]
-                        )
+                if existing_user and (
+                    current_user.id != existing_user.id or not current_user
+                ):
+                    raise ValidationError(
+                        "Email address has already been used",
+                        field_names=["email"],
+                    )
         else:
             if email == current_user.email:
                 return data
-            else:
-                confirm = data.get("confirm")
+            confirm = data.get("confirm")
 
-                if bool(confirm) is False:
-                    raise ValidationError(
-                        "Please confirm your current password", field_names=["confirm"]
-                    )
-
-                test = verify_password(
-                    plaintext=confirm, ciphertext=current_user.password
+            if bool(confirm) is False:
+                raise ValidationError(
+                    "Please confirm your current password", field_names=["confirm"]
                 )
-                if test is False:
-                    raise ValidationError(
-                        "Your previous password is incorrect", field_names=["confirm"]
-                    )
 
-                if existing_user:
-                    raise ValidationError(
-                        "Email address has already been used", field_names=["email"]
-                    )
-                if check_email_is_whitelisted(email) is False:
-                    raise ValidationError(
-                        "Only email addresses under {domains} may register".format(
-                            domains=get_config("domain_whitelist")
-                        ),
-                        field_names=["email"],
-                    )
-                if get_config("verify_emails"):
-                    current_user.verified = False
+            test = verify_password(
+                plaintext=confirm, ciphertext=current_user.password
+            )
+            if test is False:
+                raise ValidationError(
+                    "Your previous password is incorrect", field_names=["confirm"]
+                )
+
+            if existing_user:
+                raise ValidationError(
+                    "Email address has already been used", field_names=["email"]
+                )
+            if check_email_is_whitelisted(email) is False:
+                raise ValidationError(
+                    "Only email addresses under {domains} may register".format(
+                        domains=get_config("domain_whitelist")
+                    ),
+                    field_names=["email"],
+                )
+            if get_config("verify_emails"):
+                current_user.verified = False
 
     @pre_load
     def validate_password_confirmation(self, data):
@@ -158,9 +148,7 @@ class UserSchema(ma.ModelSchema):
         confirm = data.get("confirm")
         target_user = get_current_user()
 
-        if is_admin():
-            pass
-        else:
+        if not is_admin():
             if password and (bool(confirm) is False):
                 raise ValidationError(
                     "Please confirm your current password", field_names=["confirm"]

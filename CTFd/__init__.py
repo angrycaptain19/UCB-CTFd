@@ -121,17 +121,16 @@ class ThemeLoader(FileSystemLoader):
 
 
 def confirm_upgrade():
-    if sys.stdin.isatty():
-        print("/*\\ CTFd has updated and must update the database! /*\\")
-        print("/*\\ Please backup your database before proceeding! /*\\")
-        print("/*\\ CTFd maintainers are not responsible for any data loss! /*\\")
-        if input("Run database migrations (Y/N)").lower().strip() == "y":  # nosec B322
-            return True
-        else:
-            print("/*\\ Ignored database migrations... /*\\")
-            return False
-    else:
+    if not sys.stdin.isatty():
         return True
+
+    print("/*\\ CTFd has updated and must update the database! /*\\")
+    print("/*\\ Please backup your database before proceeding! /*\\")
+    print("/*\\ CTFd maintainers are not responsible for any data loss! /*\\")
+    if input("Run database migrations (Y/N)").lower().strip() == "y":  # nosec B322
+        return True
+    print("/*\\ Ignored database migrations... /*\\")
+    return False
 
 
 def run_upgrade():

@@ -68,7 +68,7 @@ def join():
             )
         return render_template("teams/join_team.html", infos=infos, errors=errors)
 
-    if request.method == "POST":
+    elif request.method == "POST":
         teamname = request.form.get("name")
         passphrase = request.form.get("password", "").strip()
 

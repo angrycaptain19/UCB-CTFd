@@ -109,11 +109,9 @@ def get_standings(count=None, admin=False, fields=[]):
     Only select a certain amount of users if asked.
     """
     if count is None:
-        standings = standings_query.all()
+        return standings_query.all()
     else:
-        standings = standings_query.limit(count).all()
-
-    return standings
+        return standings_query.limit(count).all()
 
 
 @cache.memoize(timeout=60)

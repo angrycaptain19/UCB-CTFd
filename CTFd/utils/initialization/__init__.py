@@ -160,8 +160,6 @@ def init_logs(app):
 def init_events(app):
     if app.config.get("CACHE_TYPE") == "redis":
         app.events_manager = RedisEventManager()
-    elif app.config.get("CACHE_TYPE") == "filesystem":
-        app.events_manager = EventManager()
     else:
         app.events_manager = EventManager()
 
@@ -272,12 +270,14 @@ def init_request_processors(app):
         if not session.get("nonce"):
             session["nonce"] = generate_nonce()
         if request.method not in ("GET", "HEAD", "OPTIONS", "TRACE"):
-            if request.content_type == "application/json":
-                if session["nonce"] != request.headers.get("CSRF-Token"):
-                    abort(403)
-            if request.content_type != "application/json":
-                if session["nonce"] != request.form.get("nonce"):
-                    abort(403)
+            if request.content_type == "application/json" and session[
+                "nonce"
+            ] != request.headers.get("CSRF-Token"):
+                abort(403)
+            if request.content_type != "application/json" and session[
+                "nonce"
+            ] != request.form.get("nonce"):
+                abort(403)
 
     application_root = app.config.get("APPLICATION_ROOT")
     if application_root != "/":

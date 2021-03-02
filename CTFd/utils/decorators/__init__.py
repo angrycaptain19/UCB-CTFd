@@ -21,16 +21,14 @@ def during_ctf_time_only(f):
     def during_ctf_time_only_wrapper(*args, **kwargs):
         if ctftime() or current_user.is_admin():
             return f(*args, **kwargs)
-        else:
-            if ctf_ended():
-                if view_after_ctf():
-                    return f(*args, **kwargs)
-                else:
-                    error = "{} has ended".format(config.ctf_name())
-                    abort(403, description=error)
-            if ctf_started() is False:
-                error = "{} has not started yet".format(config.ctf_name())
-                abort(403, description=error)
+        if ctf_ended():
+            if view_after_ctf():
+                return f(*args, **kwargs)
+            error = "{} has ended".format(config.ctf_name())
+            abort(403, description=error)
+        if ctf_started() is False:
+            error = "{} has not started yet".format(config.ctf_name())
+            abort(403, description=error)
 
     return during_ctf_time_only_wrapper
 
@@ -59,16 +57,18 @@ def require_verified_emails(f):
 
     @functools.wraps(f)
     def _require_verified_emails(*args, **kwargs):
-        if get_config("verify_emails"):
-            if current_user.authed():
-                if (
-                    current_user.is_admin() is False
-                    and current_user.is_verified() is False
-                ):  # User is not confirmed
-                    if request.content_type == "application/json":
-                        abort(403)
-                    else:
-                        return redirect(url_for("auth.confirm"))
+        if (
+            get_config("verify_emails")
+            and current_user.authed()
+            and (
+                current_user.is_admin() is False
+                and current_user.is_verified() is False
+            )
+        ):  # User is not confirmed
+            if request.content_type == "application/json":
+                abort(403)
+            else:
+                return redirect(url_for("auth.confirm"))
         return f(*args, **kwargs)
 
     return _require_verified_emails

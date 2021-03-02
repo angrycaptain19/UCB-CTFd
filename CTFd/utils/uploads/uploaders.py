@@ -82,13 +82,12 @@ class S3Uploader(BaseUploader):
         access_key = get_app_config("AWS_ACCESS_KEY_ID")
         secret_key = get_app_config("AWS_SECRET_ACCESS_KEY")
         endpoint = get_app_config("AWS_S3_ENDPOINT_URL")
-        client = boto3.client(
+        return boto3.client(
             "s3",
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_key,
             endpoint_url=endpoint,
         )
-        return client
 
     def _clean_filename(self, c):
         if c in string.ascii_letters + string.digits + "-" + "_" + ".":

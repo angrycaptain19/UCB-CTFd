@@ -175,61 +175,60 @@ def config():
 @admin.route("/admin/reset", methods=["GET", "POST"])
 @admins_only
 def reset():
-    if request.method == "POST":
-        require_setup = False
-        logout = False
-        next_url = url_for("admin.statistics")
+    if request.method != "POST":
+        return render_template("admin/reset.html")
+    require_setup = False
+    logout = False
+    next_url = url_for("admin.statistics")
 
-        data = request.form
+    data = request.form
 
-        if data.get("pages"):
-            _pages = Pages.query.all()
-            for p in _pages:
-                for f in p.files:
-                    delete_file(file_id=f.id)
+    if data.get("pages"):
+        _pages = Pages.query.all()
+        for p in _pages:
+            for f in p.files:
+                delete_file(file_id=f.id)
 
-            Pages.query.delete()
+        Pages.query.delete()
 
-        if data.get("notifications"):
-            Notifications.query.delete()
+    if data.get("notifications"):
+        Notifications.query.delete()
 
-        if data.get("challenges"):
-            _challenges = Challenges.query.all()
-            for c in _challenges:
-                for f in c.files:
-                    delete_file(file_id=f.id)
-            Challenges.query.delete()
+    if data.get("challenges"):
+        _challenges = Challenges.query.all()
+        for c in _challenges:
+            for f in c.files:
+                delete_file(file_id=f.id)
+        Challenges.query.delete()
 
-        if data.get("accounts"):
-            Users.query.delete()
-            Teams.query.delete()
-            require_setup = True
-            logout = True
+    if data.get("accounts"):
+        Users.query.delete()
+        Teams.query.delete()
+        require_setup = True
+        logout = True
 
-        if data.get("submissions"):
-            Solves.query.delete()
-            Submissions.query.delete()
-            Awards.query.delete()
-            Unlocks.query.delete()
-            Tracking.query.delete()
+    if data.get("submissions"):
+        Solves.query.delete()
+        Submissions.query.delete()
+        Awards.query.delete()
+        Unlocks.query.delete()
+        Tracking.query.delete()
 
-        if require_setup:
-            set_config("setup", False)
-            cache.clear()
-            logout_user()
-            next_url = url_for("views.setup")
+    if require_setup:
+        set_config("setup", False)
+        cache.clear()
+        logout_user()
+        next_url = url_for("views.setup")
 
-        db.session.commit()
+    db.session.commit()
 
-        clear_pages()
-        clear_standings()
-        clear_config()
+    clear_pages()
+    clear_standings()
+    clear_config()
 
-        if logout is True:
-            cache.clear()
-            logout_user()
+    if logout:
+        cache.clear()
+        logout_user()
 
-        db.session.close()
-        return redirect(next_url)
-
-    return render_template("admin/reset.html")
+    db.session.close()
+    return redirect(next_url)
