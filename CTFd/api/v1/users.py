@@ -346,10 +346,7 @@ class UserPrivateFails(Resource):
         if response.errors:
             return {"success": False, "errors": response.errors}, 400
 
-        if is_admin():
-            data = response.data
-        else:
-            data = []
+        data = response.data if is_admin() else []
         count = len(response.data)
 
         return {"success": True, "data": data, "meta": {"count": count}}
@@ -411,10 +408,7 @@ class UserPublicFails(Resource):
         if response.errors:
             return {"success": False, "errors": response.errors}, 400
 
-        if is_admin():
-            data = response.data
-        else:
-            data = []
+        data = response.data if is_admin() else []
         count = len(response.data)
 
         return {"success": True, "data": data, "meta": {"count": count}}

@@ -15,23 +15,21 @@ from CTFd.utils.security.signing import hmac
 
 
 def get_current_user():
-    if authed():
-        user = Users.query.filter_by(id=session["id"]).first()
-
-        # Check if the session is still valid
-        session_hash = session.get("hash")
-        if session_hash:
-            if session_hash != hmac(user.password):
-                logout_user()
-                if request.content_type == "application/json":
-                    error = 401
-                else:
-                    error = redirect(url_for("auth.login", next=request.full_path))
-                abort(error)
-
-        return user
-    else:
+    if not authed():
         return None
+    user = Users.query.filter_by(id=session["id"]).first()
+
+    # Check if the session is still valid
+    session_hash = session.get("hash")
+    if session_hash and session_hash != hmac(user.password):
+        logout_user()
+        if request.content_type == "application/json":
+            error = 401
+        else:
+            error = redirect(url_for("auth.login", next=request.full_path))
+        abort(error)
+
+    return user
 
 
 def get_current_user_attrs():
@@ -45,9 +43,7 @@ def get_current_user_attrs():
 def get_user_attrs(user_id):
     user = Users.query.filter_by(id=user_id).first()
     if user:
-        d = {}
-        for field in UserAttrs._fields:
-            d[field] = getattr(user, field)
+        d = {field: getattr(user, field) for field in UserAttrs._fields}
         return UserAttrs(**d)
     return None
 
@@ -85,11 +81,11 @@ def get_team_score(team_id):
 
 
 def get_current_team():
-    if authed():
-        user = get_current_user()
-        return user.team
-    else:
+    if not authed():
         return None
+
+    user = get_current_user()
+    return user.team
 
 
 def get_current_team_attrs():
@@ -104,19 +100,17 @@ def get_current_team_attrs():
 def get_team_attrs(team_id):
     team = Teams.query.filter_by(id=team_id).first()
     if team:
-        d = {}
-        for field in TeamAttrs._fields:
-            d[field] = getattr(team, field)
+        d = {field: getattr(team, field) for field in TeamAttrs._fields}
         return TeamAttrs(**d)
     return None
 
 
 def get_current_user_type(fallback=None):
-    if authed():
-        user = get_current_user_attrs()
-        return user.type
-    else:
+    if not authed():
         return fallback
+
+    user = get_current_user_attrs()
+    return user.type
 
 
 def authed():
@@ -124,22 +118,22 @@ def authed():
 
 
 def is_admin():
-    if authed():
-        user = get_current_user_attrs()
-        return user.type == "admin"
-    else:
+    if not authed():
         return False
+
+    user = get_current_user_attrs()
+    return user.type == "admin"
 
 
 def is_verified():
-    if get_config("verify_emails"):
-        user = get_current_user_attrs()
-        if user:
-            return user.verified
-        else:
-            return False
-    else:
+    if not get_config("verify_emails"):
         return True
+
+    user = get_current_user_attrs()
+    if user:
+        return user.verified
+    else:
+        return False
 
 
 def get_ip(req=None):
@@ -182,7 +176,7 @@ def get_user_recent_ips(user_id):
         .filter(Tracking.user_id == user_id, Tracking.date >= hour_ago)
         .all()
     )
-    return set([ip for (ip,) in addrs])
+    return {ip for (ip,) in addrs}
 
 
 def get_wrong_submissions_per_minute(account_id):

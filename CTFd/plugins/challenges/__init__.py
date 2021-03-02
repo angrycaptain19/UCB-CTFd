@@ -48,7 +48,7 @@ class BaseChallenge(object):
         :param challenge:
         :return: Challenge object, data dictionary to be returned to the user
         """
-        data = {
+        return {
             "id": challenge.id,
             "name": challenge.name,
             "value": challenge.value,
@@ -64,7 +64,6 @@ class BaseChallenge(object):
                 "scripts": cls.scripts,
             },
         }
-        return data
 
     @classmethod
     def update(cls, challenge, request):

@@ -15,10 +15,9 @@ def build_html(html):
 
 @cache.memoize()
 def get_pages():
-    db_pages = Pages.query.filter(
+    return Pages.query.filter(
         Pages.route != "index", Pages.draft.isnot(True), Pages.hidden.isnot(True)
     ).all()
-    return db_pages
 
 
 @cache.memoize()

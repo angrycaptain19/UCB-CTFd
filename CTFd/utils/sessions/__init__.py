@@ -111,11 +111,7 @@ class CachingSessionInterface(SessionInterface):
                 timeout=total_seconds(app.permanent_session_lifetime),
             )
 
-            if self.use_signer:
-                session_id = sign(want_bytes(session.sid))
-            else:
-                session_id = session.sid
-
+            session_id = sign(want_bytes(session.sid)) if self.use_signer else session.sid
             response.set_cookie(
                 app.session_cookie_name,
                 session_id,

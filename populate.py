@@ -146,7 +146,7 @@ if __name__ == "__main__":
         # Generating Files
         print("GENERATING FILES")
         AMT_CHALS_WITH_FILES = int(CHAL_AMOUNT * (3.0 / 4.0))
-        for x in range(AMT_CHALS_WITH_FILES):
+        for _ in range(AMT_CHALS_WITH_FILES):
             chal = random.randint(1, CHAL_AMOUNT)
             filename = gen_file()
             md5hash = hashlib.md5(filename.encode("utf-8")).hexdigest()
@@ -169,7 +169,6 @@ if __name__ == "__main__":
                 team = Teams(name=name, password="password")
                 if random_chance():
                     team.affiliation = gen_affiliation()
-                if random_chance():
                     oauth_id = random.randint(1, 1000)
                     while oauth_id in used_oauth_ids:
                         oauth_id = random.randint(1, 1000)
@@ -194,7 +193,6 @@ if __name__ == "__main__":
                     user.verified = True
                     if random_chance():
                         user.affiliation = gen_affiliation()
-                    if random_chance():
                         oauth_id = random.randint(1, 1000)
                         while oauth_id in used_oauth_ids:
                             oauth_id = random.randint(1, 1000)
@@ -231,13 +229,48 @@ if __name__ == "__main__":
 
         # Generating Solves
         print("GENERATING SOLVES")
-        if mode == "users":
+        if mode == "teams":
+            for x in range(1, TEAM_AMOUNT):
+                used_teams = []
+                used_users = []
+                base_time = datetime.datetime.utcnow() + datetime.timedelta(
+                    minutes=-10000
+                )
+                team = Teams.query.filter_by(id=x).first()
+                members_ids = [member.id for member in team.members]
+                for _ in range(random.randint(1, CHAL_AMOUNT)):
+                    chalid = random.randint(1, CHAL_AMOUNT)
+                    user_id = random.choice(members_ids)
+                    if (chalid, team.id) not in used_teams and (
+                        chalid,
+                        user_id,
+                    ) not in used_users:
+                        solve = Solves(
+                            user_id=user_id,
+                            team_id=team.id,
+                            challenge_id=chalid,
+                            ip="127.0.0.1",
+                            provided=gen_word(),
+                        )
+                        new_base = random_date(
+                            base_time,
+                            base_time
+                            + datetime.timedelta(minutes=random.randint(30, 60)),
+                        )
+                        solve.date = new_base
+                        base_time = new_base
+                        db.session.add(solve)
+                        db.session.commit()
+                        used_teams.append((chalid, team.id))
+                        used_users.append((chalid, user_id))
+
+        elif mode == "users":
             for x in range(USER_AMOUNT):
                 used = []
                 base_time = datetime.datetime.utcnow() + datetime.timedelta(
                     minutes=-10000
                 )
-                for y in range(random.randint(1, CHAL_AMOUNT)):
+                for _ in range(random.randint(1, CHAL_AMOUNT)):
                     chalid = random.randint(1, CHAL_AMOUNT)
                     if chalid not in used:
                         used.append(chalid)
@@ -260,39 +293,6 @@ if __name__ == "__main__":
 
                         db.session.add(solve)
                         db.session.commit()
-        elif mode == "teams":
-            for x in range(1, TEAM_AMOUNT):
-                used_teams = []
-                used_users = []
-                base_time = datetime.datetime.utcnow() + datetime.timedelta(
-                    minutes=-10000
-                )
-                team = Teams.query.filter_by(id=x).first()
-                members_ids = [member.id for member in team.members]
-                for y in range(random.randint(1, CHAL_AMOUNT)):
-                    chalid = random.randint(1, CHAL_AMOUNT)
-                    user_id = random.choice(members_ids)
-                    if (chalid, team.id) not in used_teams:
-                        if (chalid, user_id) not in used_users:
-                            solve = Solves(
-                                user_id=user_id,
-                                team_id=team.id,
-                                challenge_id=chalid,
-                                ip="127.0.0.1",
-                                provided=gen_word(),
-                            )
-                            new_base = random_date(
-                                base_time,
-                                base_time
-                                + datetime.timedelta(minutes=random.randint(30, 60)),
-                            )
-                            solve.date = new_base
-                            base_time = new_base
-                            db.session.add(solve)
-                            db.session.commit()
-                            used_teams.append((chalid, team.id))
-                            used_users.append((chalid, user_id))
-
         db.session.commit()
 
         # Generating Awards
@@ -324,7 +324,7 @@ if __name__ == "__main__":
         for x in range(USER_AMOUNT):
             used = []
             base_time = datetime.datetime.utcnow() + datetime.timedelta(minutes=-10000)
-            for y in range(random.randint(1, CHAL_AMOUNT * 20)):
+            for _ in range(random.randint(1, CHAL_AMOUNT * 20)):
                 chalid = random.randint(1, CHAL_AMOUNT)
                 if chalid not in used:
                     used.append(chalid)

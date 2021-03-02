@@ -67,11 +67,7 @@ def create_ctfd(
     application_root="/",
     config=TestingConfig,
 ):
-    if enable_plugins:
-        config.SAFE_MODE = False
-    else:
-        config.SAFE_MODE = True
-
+    config.SAFE_MODE = not enable_plugins
     config.APPLICATION_ROOT = application_root
     url = make_url(config.SQLALCHEMY_DATABASE_URI)
     if url.database:

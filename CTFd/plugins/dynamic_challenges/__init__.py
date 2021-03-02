@@ -78,8 +78,7 @@ class DynamicValueChallenge(BaseChallenge):
 
         value = math.ceil(value)
 
-        if value < challenge.minimum:
-            value = challenge.minimum
+        value = max(value, challenge.minimum)
 
         challenge.value = value
         db.session.commit()
@@ -94,7 +93,7 @@ class DynamicValueChallenge(BaseChallenge):
         :return: Challenge object, data dictionary to be returned to the user
         """
         challenge = DynamicChallenge.query.filter_by(id=challenge.id).first()
-        data = {
+        return {
             "id": challenge.id,
             "name": challenge.name,
             "value": challenge.value,
@@ -113,7 +112,6 @@ class DynamicValueChallenge(BaseChallenge):
                 "scripts": cls.scripts,
             },
         }
-        return data
 
     @classmethod
     def update(cls, challenge, request):

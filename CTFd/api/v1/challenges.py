@@ -131,7 +131,7 @@ class ChallengeList(Resource):
                 .order_by(Challenges.value)
                 .all()
             )
-            solve_ids = set([challenge.id for challenge in challenges])
+            solve_ids = {challenge.id for challenge in challenges}
         else:
             challenges = (
                 Challenges.query.filter(
@@ -150,14 +150,15 @@ class ChallengeList(Resource):
                     .order_by(Solves.challenge_id.asc())
                     .all()
                 )
-                solve_ids = set([value for value, in solve_ids])
+                solve_ids = {value for value, in solve_ids}
 
                 # TODO: Convert this into a re-useable decorator
-                if is_admin():
-                    pass
-                else:
-                    if config.is_teams_mode() and get_current_team() is None:
-                        abort(403)
+                if (
+                    not is_admin()
+                    and config.is_teams_mode()
+                    and get_current_team() is None
+                ):
+                    abort(403)
             else:
                 solve_ids = set()
 
@@ -168,9 +169,7 @@ class ChallengeList(Resource):
                 requirements = challenge.requirements.get("prerequisites", [])
                 anonymize = challenge.requirements.get("anonymize")
                 prereqs = set(requirements)
-                if solve_ids >= prereqs:
-                    pass
-                else:
+                if solve_ids < prereqs:
                     if anonymize:
                         response.append(
                             {
@@ -297,11 +296,9 @@ class Challenge(Resource):
                 else:
                     # We need to handle the case where a user is viewing challenges anonymously
                     solve_ids = []
-                solve_ids = set([value for value, in solve_ids])
+                solve_ids = {value for value, in solve_ids}
                 prereqs = set(requirements)
-                if solve_ids >= prereqs or is_admin():
-                    pass
-                else:
+                if solve_ids < prereqs and not is_admin():
                     if anonymize:
                         return {
                             "success": True,
@@ -331,20 +328,12 @@ class Challenge(Resource):
             team = get_current_team()
 
             # TODO: Convert this into a re-useable decorator
-            if is_admin():
-                pass
-            else:
-                if config.is_teams_mode() and team is None:
-                    abort(403)
+            if not is_admin() and config.is_teams_mode() and team is None:
+                abort(403)
 
-            unlocked_hints = set(
-                [
-                    u.target
-                    for u in HintUnlocks.query.filter_by(
-                        type="hints", account_id=user.account_id
-                    )
-                ]
-            )
+            unlocked_hints = {u.target for u in HintUnlocks.query.filter_by(
+                                type="hints", account_id=user.account_id
+                            )}
             files = []
             for f in chal.files:
                 token = {
@@ -860,7 +849,6 @@ class ChallengeSolves(Resource):
     @during_ctf_time_only
     @require_verified_emails
     def get(self, challenge_id):
-        response = []
         challenge = Challenges.query.filter_by(id=challenge_id).first_or_404()
 
         # TODO: Need a generic challenge visibility call.
@@ -887,16 +875,12 @@ class ChallengeSolves(Resource):
                 dt = datetime.datetime.utcfromtimestamp(freeze)
                 solves = solves.filter(Solves.date < dt)
 
-        for solve in solves:
-            response.append(
-                {
+        response = [{
                     "account_id": solve.account_id,
                     "name": solve.account.name,
                     "date": isoformat(solve.date),
                     "account_url": generate_account_url(account_id=solve.account_id),
-                }
-            )
-
+                } for solve in solves]
         return {"success": True, "data": response}
 
 
@@ -904,14 +888,16 @@ class ChallengeSolves(Resource):
 class ChallengeFiles(Resource):
     @admins_only
     def get(self, challenge_id):
-        response = []
-
         challenge_files = ChallengeFilesModel.query.filter_by(
             challenge_id=challenge_id
         ).all()
 
-        for f in challenge_files:
-            response.append({"id": f.id, "type": f.type, "location": f.location})
+        response = [
+            {"id": f.id, "type": f.type, "location": f.location}
+            for f in challenge_files
+        ]
+
+
         return {"success": True, "data": response}
 
 
@@ -919,14 +905,14 @@ class ChallengeFiles(Resource):
 class ChallengeTags(Resource):
     @admins_only
     def get(self, challenge_id):
-        response = []
-
         tags = Tags.query.filter_by(challenge_id=challenge_id).all()
 
-        for t in tags:
-            response.append(
-                {"id": t.id, "challenge_id": t.challenge_id, "value": t.value}
-            )
+        response = [
+            {"id": t.id, "challenge_id": t.challenge_id, "value": t.value}
+            for t in tags
+        ]
+
+
         return {"success": True, "data": response}
 
 
@@ -998,7 +984,6 @@ class ChallengeTraining(Resource):
         },
         location="query",
     )
-    
     def get(self, query_args):
         # Build filtering queries
         q = query_args.pop("q", None)
@@ -1016,7 +1001,7 @@ class ChallengeTraining(Resource):
                 .order_by(Challenges.value)
                 .all()
             )
-            solve_ids = set([challenge.id for challenge in challenges])
+            solve_ids = {challenge.id for challenge in challenges}
         else:
             challenges = (
                 Challenges.query.filter(
@@ -1035,14 +1020,15 @@ class ChallengeTraining(Resource):
                     .order_by(Solves.challenge_id.asc())
                     .all()
                 )
-                solve_ids = set([value for value, in solve_ids])
+                solve_ids = {value for value, in solve_ids}
 
                 # TODO: Convert this into a re-useable decorator
-                if is_admin():
-                    pass
-                else:
-                    if config.is_teams_mode() and get_current_team() is None:
-                        abort(403)
+                if (
+                    not is_admin()
+                    and config.is_teams_mode()
+                    and get_current_team() is None
+                ):
+                    abort(403)
             else:
                 solve_ids = set()
 
@@ -1053,9 +1039,7 @@ class ChallengeTraining(Resource):
                 requirements = challenge.requirements.get("prerequisites", [])
                 anonymize = challenge.requirements.get("anonymize")
                 prereqs = set(requirements)
-                if solve_ids >= prereqs:
-                    pass
-                else:
+                if solve_ids < prereqs:
                     if anonymize:
                         response.append(
                             {

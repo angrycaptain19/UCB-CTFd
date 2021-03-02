@@ -538,10 +538,7 @@ class Teams(db.Model):
 
     @cache.memoize()
     def get_score(self, admin=False):
-        score = 0
-        for member in self.members:
-            score += member.get_score(admin=admin)
-        return score
+        return sum(member.get_score(admin=admin) for member in self.members)
 
     @cache.memoize()
     def get_place(self, admin=False, numeric=False):

@@ -14,15 +14,16 @@ sys.path.append(os.getcwd())
 
 
 def cast_bool(value):
-    if value and value.isdigit():
-        return int(value)
-    elif value and isinstance(value, string_types):
-        if value.lower() == "true":
-            return True
-        elif value.lower() == "false":
-            return False
-        else:
-            return value
+    if value:
+        if value.isdigit():
+            return int(value)
+        elif isinstance(value, string_types):
+            if value.lower() == "true":
+                return True
+            elif value.lower() == "false":
+                return False
+            else:
+                return value
 
 
 if __name__ == "__main__":
@@ -34,26 +35,21 @@ if __name__ == "__main__":
         * and backing up the CTFd source code directory"""
     )
     print("/*\\ CTFd maintainers are not responsible for any data loss! /*\\")
-    if input("Run database migrations (Y/N)").lower().strip() == "y":
-        pass
-    else:
+    if input("Run database migrations (Y/N)").lower().strip() != "y":
         print("/*\\ Aborting database migrations... /*\\")
         print("/*\\ Exiting... /*\\")
         exit(1)
 
     db_url = config.Config.SQLALCHEMY_DATABASE_URI
-    old_data = {}
-
     old_conn = dataset.connect(config.Config.SQLALCHEMY_DATABASE_URI)
     tables = old_conn.tables
-    for table in tables:
-        old_data[table] = old_conn[table].all()
+    old_data = {table: old_conn[table].all() for table in tables}
 
     if "alembic_version" in old_data:
         old_data.pop("alembic_version")
 
     print("Current Tables:")
-    for table in old_data.keys():
+    for table in old_data:
         print("\t", table)
 
     old_conn.executable.close()
@@ -239,11 +235,9 @@ if __name__ == "__main__":
     manual = []
     not_created = []
     print("MIGRATING extra tables")
-    for table in old_data.keys():
+    for table, data in old_data.items():
         print("MIGRATING", table)
         new_conn.create_table(table, primary_id=False)
-        data = old_data[table]
-
         ran = False
         for row in data:
             new_conn[table].insert(dict(row))
@@ -252,7 +246,7 @@ if __name__ == "__main__":
             if ran:
                 manual.append(table)
 
-        if ran is False:
+        if not ran:
             not_created.append(table)
 
     print("Migration completed.")

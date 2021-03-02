@@ -59,11 +59,7 @@ def upgrade(plugin_name=None, revision=None):
     lower = get_config(plugin_name + "_alembic_version")
 
     # Do we upgrade to head or to a specific revision
-    if revision is None:
-        upper = script.get_current_head()
-    else:
-        upper = revision
-
+    upper = script.get_current_head() if revision is None else revision
     # Apply from lower to upper
     revs = list(script.iterate_revisions(lower=lower, upper=upper))
     revs.reverse()

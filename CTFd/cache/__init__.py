@@ -14,8 +14,7 @@ def make_cache_key(path=None, key_prefix="view/%s"):
     """
     if path is None:
         path = request.endpoint
-    cache_key = key_prefix % path
-    return cache_key
+    return key_prefix % path
 
 
 def clear_config():

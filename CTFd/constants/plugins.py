@@ -12,14 +12,16 @@ class _PluginWrapper:
         subdir = application_root != "/"
         scripts = []
         for script in get_registered_scripts():
-            if script.startswith("http"):
+            if (
+                script.startswith("http")
+                or not script.startswith("http")
+                and not subdir
+            ):
                 scripts.append(f'<script defer src="{script}"></script>')
-            elif subdir:
+            else:
                 scripts.append(
                     f'<script defer src="{application_root}/{script}"></script>'
                 )
-            else:
-                scripts.append(f'<script defer src="{script}"></script>')
         return markup("\n".join(scripts))
 
     @property
@@ -28,17 +30,17 @@ class _PluginWrapper:
         subdir = application_root != "/"
         _styles = []
         for stylesheet in get_registered_stylesheets():
-            if stylesheet.startswith("http"):
+            if (
+                stylesheet.startswith("http")
+                or not stylesheet.startswith("http")
+                and not subdir
+            ):
                 _styles.append(
                     f'<link rel="stylesheet" type="text/css" href="{stylesheet}">'
-                )
-            elif subdir:
-                _styles.append(
-                    f'<link rel="stylesheet" type="text/css" href="{application_root}/{stylesheet}">'
                 )
             else:
                 _styles.append(
-                    f'<link rel="stylesheet" type="text/css" href="{stylesheet}">'
+                    f'<link rel="stylesheet" type="text/css" href="{application_root}/{stylesheet}">'
                 )
         return markup("\n".join(_styles))
 

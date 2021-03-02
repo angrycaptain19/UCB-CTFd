@@ -31,10 +31,7 @@ class ScoreboardList(Resource):
         account_type = get_mode_as_word()
 
         if mode == TEAMS_MODE:
-            team_ids = []
-            for team in standings:
-                team_ids.append(team.account_id)
-
+            team_ids = [team.account_id for team in standings]
             # Get team objects with members explicitly loaded in
             teams = (
                 Teams.query.options(joinedload(Teams.members))
@@ -47,10 +44,7 @@ class ScoreboardList(Resource):
 
             # Get user_standings as a dict so that we can more quickly get member scores
             user_standings = get_user_standings()
-            users = {}
-            for u in user_standings:
-                users[u.user_id] = u
-
+            users = {u.user_id: u for u in user_standings}
         for i, x in enumerate(standings):
             entry = {
                 "pos": i + 1,
@@ -102,8 +96,6 @@ class ScoreboardDetail(Resource):
     @check_score_visibility
     @cache.cached(timeout=60, key_prefix=make_cache_key)
     def get(self, count):
-        response = {}
-
         standings = get_standings(count=count)
 
         team_ids = [team.account_id for team in standings]
@@ -152,10 +144,10 @@ class ScoreboardDetail(Resource):
                 solves_mapper[team_id], key=lambda k: k["date"]
             )
 
-        for i, team in enumerate(team_ids):
-            response[i + 1] = {
+        response = {i + 1: {
                 "id": standings[i].account_id,
                 "name": standings[i].name,
                 "solves": solves_mapper.get(standings[i].account_id, []),
-            }
+            } for i, team in enumerate(team_ids)}
+
         return {"success": True, "data": response}
